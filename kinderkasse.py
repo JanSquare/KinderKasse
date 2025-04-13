@@ -10,7 +10,7 @@ import os
 artikel_db = ArtikelDB("artikel.csv")
 display = vfd.BA63("/dev/ttySC0")
 display.reset()
-display.write("marloth automation", line=1, row=1)
+display.write("CASPARs  Laden", line=1, row=4)
 
 # Steuer-Barcodes
 STEUERCODE_BEZAHLEN = "9999999999998"
