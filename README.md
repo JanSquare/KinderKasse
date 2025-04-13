@@ -1,6 +1,9 @@
 # KinderKasse
 Kinderkasse mit Scanner, BA63-Display und Bon-Drucker
 
+# Sources
+https://github.com/CatCookie/VFDSerial
+
 # BOM 
 Raspberry Pi
 Handscanner Netum NSL5 
