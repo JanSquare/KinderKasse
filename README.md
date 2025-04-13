@@ -8,6 +8,15 @@ https://github.com/CatCookie/VFDSerial
 Raspberry Pi
 Handscanner Netum NSL5 
 
+## RS232 Shield einrichten
+
+https://www.waveshare.com/wiki/RS485_RS232_HAT#Add_driver
+
+''' 
+dtoverlay=sc16is752-spi1,int_pin=24 
+'''
+
+
 ## Scanner einrichten
 
 Der Scanner muss als COM-Device konfiguriert werden. 
