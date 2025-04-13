@@ -12,9 +12,13 @@ Handscanner Netum NSL5
 
 https://www.waveshare.com/wiki/RS485_RS232_HAT#Add_driver
 
-''' 
-dtoverlay=sc16is752-spi1,int_pin=24 
-'''
+```
+sudo nano /boot/firmware/config.txt
+#Add the following, int_pin is set according to the actual welding method:
+dtoverlay=sc16is752-spi1,int_pin=24
+#reboot device
+sudo reboot
+```
 
 
 ## Scanner einrichten
