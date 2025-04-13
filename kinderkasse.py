@@ -4,6 +4,7 @@ import serial_asyncio
 from artikel_db import ArtikelDB
 import vfd
 from time import ctime
+import os
 
 # Initialisiere Artikel-Datenbank und Display
 artikel_db = ArtikelDB("artikel.csv")
@@ -17,6 +18,14 @@ STEUERCODE_LOESCHEN = "9999999999999"
 
 # Warenkorb als globale Liste
 warenkorb = []
+
+# Liste nicht gefundener Barcodes
+UNBEKANNTE_DATEI = "unbekannte_barcodes.txt"
+if os.path.exists(UNBEKANNTE_DATEI):
+    with open(UNBEKANNTE_DATEI, "r", encoding="utf-8") as f:
+        unbekannte_barcodes = set(line.strip() for line in f if line.strip())
+else:
+    unbekannte_barcodes = set()
 
 LINE_LENGTH = 20  # muss mit deinem Display-Modell übereinstimmen
 
@@ -54,6 +63,14 @@ class KassenScannerProtocol(asyncio.Protocol):
             display.write(zeile1_komplett, line=1, row=1)
             display.write(zeile2, line=2, row=1)
         else:
+            if code not in unbekannte_barcodes:
+                unbekannte_barcodes.add(code)
+                try:
+                    with open(UNBEKANNTE_DATEI, "a", encoding="utf-8") as f:
+                        f.write(code + "\n")
+                except Exception as e:
+                    print(f"Fehler beim Schreiben in {UNBEKANNTE_DATEI}: {e}")
+
             print(f"❌ Artikel nicht gefunden für Barcode: {repr(code)}")
             display.clear()
             display.write("Unbekannter Code", line=1, row=1)
