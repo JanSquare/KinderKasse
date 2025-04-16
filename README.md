@@ -23,6 +23,16 @@ sudo reboot
 
 ## Scanner einrichten
 
+Wir binden den Scanner per id ein. 
+```bash
+ls -l /dev/serial/by-id/
+```
+Dies dann hier ändern
+```bash
+SCANNER_DEVICE = '/dev/serial/by-id/usb-Barcode_Scanner_SN1234567-if00'
+```
+
+
 Der Scanner muss als COM-Device konfiguriert werden. 
 
 ![grafik](https://github.com/user-attachments/assets/692d69e5-d2de-45a3-ac9b-fac8e6df6d1c)
