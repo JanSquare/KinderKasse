@@ -6,6 +6,9 @@ import vfd
 from time import ctime
 import os
 
+#Barcode Scanner
+SCANNER_DEVICE = '/dev/serial/by-id/usb-SM_SM-2D_PRODUCT_USB_UART_APP-000000000-if00'
+
 # Initialisiere Artikel-Datenbank und Display
 artikel_db = ArtikelDB("artikel.csv")
 display = vfd.BA63("/dev/ttySC0")
@@ -106,7 +109,7 @@ class KassenScannerProtocol(asyncio.Protocol):
 # Starte asyncio Eventloop
 loop = asyncio.get_event_loop()
 coro = serial_asyncio.create_serial_connection(
-    loop, KassenScannerProtocol, '/dev/ttyACM0', baudrate=9600
+    loop, KassenScannerProtocol, SCANNER_DEVICE, baudrate=9600
 )
 transport, protocol = loop.run_until_complete(coro)
 try:
