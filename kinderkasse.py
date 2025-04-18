@@ -94,8 +94,6 @@ class KassenScannerProtocol(asyncio.Protocol):
         code = data.decode(errors="ignore").strip()
         print(f"RAW: {data} | DECODED: {repr(code)}")
 
-        # CSV nach jedem Scan neu laden
-        artikel_db = ArtikelDB("artikel.csv")
 
         if code == STEUERCODE_BEZAHLEN:
             self.bezahlen()
@@ -134,6 +132,9 @@ class KassenScannerProtocol(asyncio.Protocol):
             display.write(code, line=2, row=1)
 
     def bezahlen(self):
+        # CSV vor bezahlen neu Laden
+        artikel_db = ArtikelDB("artikel.csv")
+
         if not warenkorb:
             display.clear()
             display.write("Nichts zu zahlen", line=1, row=1)
