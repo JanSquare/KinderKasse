@@ -25,3 +25,8 @@ class ArtikelDB:
 
     def suche(self, barcode):
         return self.artikel.get(barcode, None)
+
+    def refresh(self):
+        """Leert den Cache und lädt die Datenbank neu."""
+        self.artikel.clear()
+        self._lade_daten()
