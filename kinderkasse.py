@@ -44,26 +44,18 @@ def drucke_bon(positionen: List[Tuple[str, str, float]], gesamt: float) -> None:
         with open("/dev/usb/lp0", "w", encoding="cp437") as drucker:
             drucker.write("\n" + ASCII_LOGO + "\n")
             drucker.write("=" * BON_WIDTH + "\n")
-            drucker.write("\n")
-            drucker.write("Bestellung:\n")
+            drucker.write("\nBestellung:\n")
             drucker.write("-" * BON_WIDTH + "\n")
             for zeile1, zeile2, preis in positionen:
                 preis_str = f"{preis:.2f} EUR"
                 max_len = BON_WIDTH - len(preis_str)
                 text_links = zeile1[:max_len].ljust(max_len)
-                drucker.write(f"{text_links}{preis_str}\n")
-                drucker.write(f"{zeile2}\n")
-                drucker.write("\n")
+                drucker.write(f"{text_links}{preis_str}\n{zeile2}\n\n")
             drucker.write("-" * BON_WIDTH + "\n")
             drucker.write(f"GESAMT: {gesamt:.2f} EUR\n")
-            drucker.write("=" * BON_WIDTH + "\n")
-            drucker.write("Vielen Dank für deinen Einkauf!\n")
-            drucker.write("\n")
-            drucker.write("\n")
-            drucker.write("\n\n\n\x1D\x56\x00")
+            drucker.write("=" * BON_WIDTH + "\nDanke für deinen Einkauf!\n" + "\n"*3 + "\x1D\x56\x00")
     except Exception as e:
         logger.error(f"Fehler beim Drucken: {e}")
-
 
 class DisplayManager:
     def __init__(self, device: str, line_length: int = 20):
@@ -77,11 +69,14 @@ class DisplayManager:
         self.display.write(text, line=line, row=row)
 
     def show_screensaver(self) -> None:
+        """
+        Aktualisiert das Display mit Datum und Uhrzeit und plant die nächste Aktualisierung nach 60 Sekunden.
+        """
         self.clear()
-        now = asyncio.get_event_loop().time()
         from time import strftime
         self.write("CASPARs Laden", line=1)
         self.write(strftime("%d.%m.%Y %H:%M"), line=2)
+        asyncio.get_event_loop().call_later(60, self.show_screensaver)
 
 class KassenScannerProtocol(asyncio.Protocol):
     def __init__(self, artikel_file: str, display_manager: DisplayManager, unknown_file: str = "unbekannte_barcodes.txt"):
@@ -90,7 +85,6 @@ class KassenScannerProtocol(asyncio.Protocol):
         self.unknown_file = unknown_file
         self.warenkorb: List[Tuple[str, str, float]] = []
         self.unbekannte_barcodes: Set[str] = set()
-        self.loop = asyncio.get_event_loop()
         self._load_unknowns()
 
     def _load_unknowns(self) -> None:
@@ -109,7 +103,6 @@ class KassenScannerProtocol(asyncio.Protocol):
     def data_received(self, data: bytes) -> None:
         code = data.decode(errors="ignore").strip()
         logger.debug(f"Empfangen: {code}")
-
         if code == STEUERCODE_BEZAHLEN:
             asyncio.create_task(self.bezahlen())
         elif code == STEUERCODE_LOESCHEN:
@@ -124,19 +117,15 @@ class KassenScannerProtocol(asyncio.Protocol):
             self.warenkorb.append((zeile1, zeile2, preis))
             logger.info(f"Hinzugefügt: {zeile1} | {zeile2} | {preis:.2f} EUR")
             self.display.clear()
-
             preis_str = f"{preis:.2f}".replace(".", ",") + " EUR"
             max_len = self.display.line_length - len(preis_str)
             text_links = zeile1[:max_len].ljust(max_len)
-            zeile1_komplett = text_links + preis_str
-
-            self.display.write(zeile1_komplett, line=1)
+            self.display.write(text_links + preis_str, line=1)
             self.display.write(zeile2, line=2)
         else:
             if code not in self.unbekannte_barcodes:
                 self.unbekannte_barcodes.add(code)
                 self._append_unknown(code)
-
             logger.warning(f"Artikel nicht gefunden für Barcode: {code}")
             self.display.clear()
             self.display.write("Unbekannter Code", line=1)
@@ -144,7 +133,6 @@ class KassenScannerProtocol(asyncio.Protocol):
 
     def _append_unknown(self, code: str) -> None:
         try:
-            # atomar schreiben
             with tempfile.NamedTemporaryFile('w', delete=False, encoding='utf-8') as tmp:
                 tmp.write(code + "\n")
                 temp_name = tmp.name
@@ -160,25 +148,21 @@ class KassenScannerProtocol(asyncio.Protocol):
             self.display.clear()
             self.display.write("DB Fehler", line=1)
             return
-
         if not self.warenkorb:
             self.display.clear()
             self.display.write("Nichts zu zahlen", line=1)
             return
-
         gesamt = sum(preis for _, _, preis in self.warenkorb)
         self.display.clear()
         self.display.write("Summe:", line=1)
         self.display.write(f"{gesamt:.2f} EUR", line=2)
-
         logger.info("Drucke Bon")
         for ze1, ze2, pr in self.warenkorb:
             logger.info(f" {ze1} | {ze2} | {pr:.2f} EUR")
         logger.info(f" Gesamtbetrag: {gesamt:.2f} EUR")
-
         await asyncio.to_thread(drucke_bon, self.warenkorb, gesamt)
         self.warenkorb.clear()
-        self.loop.call_later(10, self.display.show_screensaver)
+        asyncio.get_event_loop().call_later(60, self.display.show_screensaver)
 
     def loeschen(self) -> None:
         self.warenkorb.clear()
@@ -191,16 +175,14 @@ class KassenScannerProtocol(asyncio.Protocol):
         logger.info("Scanner getrennt")
         asyncio.get_event_loop().stop()
 
-
 # Hauptprogramm
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
     display_mgr = DisplayManager("/dev/ttySC0")
     protocol_factory = lambda: KassenScannerProtocol("artikel.csv", display_mgr)
     loop = asyncio.get_event_loop()
     display_mgr.show_screensaver()
-    coro = serial_asyncio.create_serial_connection(
-        loop, protocol_factory, SCANNER_DEVICE, baudrate=9600
-    )
+    coro = serial_asyncio.create_serial_connection(loop, protocol_factory, SCANNER_DEVICE, baudrate=9600)
     transport, protocol = loop.run_until_complete(coro)
     try:
         loop.run_forever()
