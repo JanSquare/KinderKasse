@@ -8,7 +8,12 @@ https://github.com/CatCookie/VFDSerial
 
 # BOM 
 Raspberry Pi
+
+WaveShare RS232 hat /w female-gemale adapter
+
 Handscanner Netum NSL5 
+
+Epson TMii Label printer
 
 ## RS232 Shield einrichten
 
