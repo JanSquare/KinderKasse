@@ -1,6 +1,8 @@
 # KinderKasse
 Kinderkasse mit Scanner, BA63-Display und Bon-Drucker
 
+![Image](https://github.com/user-attachments/assets/026cb315-2c89-4523-b183-24f4bc3849d8)
+
 # Sources
 https://github.com/CatCookie/VFDSerial
 
