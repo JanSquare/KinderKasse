@@ -9,7 +9,7 @@ https://github.com/CatCookie/VFDSerial
 # BOM 
 Raspberry Pi
 
-WaveShare RS232 hat /w female-gemale adapter
+WaveShare RS232 hat /w female-female adapter
 
 Handscanner Netum NSL5 
 
